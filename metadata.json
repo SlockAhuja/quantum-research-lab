@@ -1,0 +1,7 @@
+{
+  "name": "Quantum Research Lab (QRL)",
+  "description": "Explore. Build. Simulate. Discover. Interactive quantum circuit studio, state-vector and Bloch sphere simulation, scientific benchmark suite, and educational laboratory workstation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
