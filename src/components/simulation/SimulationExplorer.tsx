@@ -315,6 +315,7 @@ export const SimulationExplorer: React.FC<SimulationExplorerProps> = ({
                         >
                           <td className="py-2 font-bold text-cyan-300">|{comp.binaryLabel}⟩</td>
                           <td className="py-2 tabular-nums">{Complex.format(c, 4)}</td>
+                          <td className="py-2 tabular-nums">{(comp.probability * 100).toFixed(2)}%</td>
                           <td className="py-2 tabular-nums">
                             {isNonZero ? `${comp.phaseRad.toFixed(3)} rad` : <span className="text-slate-600">N/A</span>}
                           </td>

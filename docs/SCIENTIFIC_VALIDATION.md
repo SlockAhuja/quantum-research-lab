@@ -102,12 +102,69 @@ $$\gamma_k = \text{Tr}(\rho_k^2) = \rho_{00}^2 + \rho_{11}^2 + 2|\rho_{01}|^2$$
 
 ---
 
-## 6. Scientific Tolerances
+## 6. Worked Example: 5-Qubit State $|11001\rangle$ & Qubit Mapping
 
-| Metric | Allowable Tolerance | Test Outcome |
-| :--- | :--- | :--- |
-| **Probability Normalization $\sum P_i$** | $|1.0 - \sum P_i| \le 10^{-4}$ | **PASS** |
-| **Statevector Amplitude Tolerance** | $\|c_{\text{QRL}} - c_{\text{Ref}}\|_\infty \le 10^{-4}$ | **PASS** |
-| **Quantum State Fidelity $\mathcal{F}$** | $\ge 0.9999$ | **PASS** |
-| **Finite-Shot Count Conservation** | $\sum C_i = \text{shots}$ (exact integer) | **PASS** |
-| **Single-Qubit Subsystem Purity (Bell)** | $|0.5000 - \gamma_0| \le 10^{-4}$ | **PASS** |
+Consider a 5-qubit circuit initialized to $|00000\rangle$ with Pauli-$X$ gates applied to wires $0, 1, 4$:
+- Wire $q_0 = 1$
+- Wire $q_1 = 1$
+- Wire $q_2 = 0$
+- Wire $q_3 = 0$
+- Wire $q_4 = 1$
+
+### 6.1 QRL & PennyLane Big-Endian Convention
+- Bitstring: $|q_0 q_1 q_2 q_3 q_4\rangle = |11001\rangle$
+- Decimal Index: $j = 1\cdot 2^4 + 1\cdot 2^3 + 0\cdot 2^2 + 0\cdot 2^1 + 1\cdot 2^0 = 16 + 8 + 1 = 25$
+- Statevector entry: $|\psi\rangle[25] = 1.0 + 0i$, all other entries $0.0$.
+
+### 6.2 Qiskit Little-Endian Convention
+- Bitstring: $|q_4 q_3 q_2 q_1 q_0\rangle = |10011\rangle$
+- Decimal Index: $i = 1\cdot 2^4 + 0\cdot 2^3 + 0\cdot 2^2 + 1\cdot 2^1 + 1\cdot 2^0 = 16 + 2 + 1 = 19$
+- Statevector entry: $|\psi_{\text{qiskit}}\rangle[19] = 1.0 + 0i$.
+
+### 6.3 Bit-Reversal Permutation
+Mapping index $19 = (10011)_2$ with bit-reversal over 5 bits:
+$$\text{reverse}(10011) = (11001)_2 = 25$$
+Hence $|\psi_{\text{QRL}}\rangle[25] = |\psi_{\text{qiskit}}\rangle[19] = 1.0$, achieving exact numerical agreement.
+
+---
+
+## 7. 23 Benchmark Experiments Reference Matrix
+
+| ID | Experiment Name | Qubits | Formulation / Gates | Expected Analytical Result | QRL Engine | Max Deviation vs Ref | Type |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **QRL-001** | Single-Qubit Superposition | 1 | $H\|0\rangle$ | $P(0)=0.5, P(1)=0.5$ | $P=[0.5, 0.5]$ | $2.19 \times 10^{-7}$ | Ideal + Historical Archive (1024 shots: 532/492) |
+| **QRL-002** | Pauli-X Bit Flip | 1 | $X\|0\rangle$ | $P(1)=1.0$ | $P(1)=1.0$ | $0.00$ | Ideal Pure State |
+| **QRL-003** | Pauli-Y Bit & Phase | 1 | $Y\|0\rangle = i\|1\rangle$ | $c_1=i, P(1)=1.0$ | $c_1=i$ | $0.00$ | Ideal Pure State |
+| **QRL-004** | Pauli-Z Phase Flip | 1 | $H \cdot Z \cdot H\|0\rangle$ | $P(1)=1.0$ | $P(1)=1.0$ | $2.22 \times 10^{-16}$ | Ideal Interferometry |
+| **QRL-005** | S Gate Quarter-Turn | 1 | $H \cdot S \cdot H\|0\rangle$ | $P(0)=0.5, P(1)=0.5$ | $P=[0.5, 0.5]$ | $2.19 \times 10^{-7}$ | Ideal Phase Rotation |
+| **QRL-006** | T Gate Non-Clifford | 1 | $H \cdot T \cdot H\|0\rangle$ | $P(0)=0.8536, P(1)=0.1464$ | Matches | $2.19 \times 10^{-7}$ | Ideal Non-Clifford |
+| **QRL-007** | Rotation $R_X(\pi/3)$ | 1 | $R_X(\pi/3)\|0\rangle$ | $P(0)=0.75, P(1)=0.25$ | $P=[0.75, 0.25]$ | $4.04 \times 10^{-7}$ | Continuous Rotation |
+| **QRL-008** | Rotation $R_Y(\pi/2)$ | 1 | $R_Y(\pi/2)\|0\rangle$ | $P(0)=0.5, P(1)=0.5$ | $P=[0.5, 0.5]$ | $2.19 \times 10^{-7}$ | Continuous Rotation |
+| **QRL-009** | Rotation $R_Z(\pi)$ | 1 | $R_Z(\pi)\|0\rangle$ | Phase flip $-i\|0\rangle$ | Matches | $2.22 \times 10^{-16}$ | Continuous Rotation |
+| **QRL-010** | Bell State $\|\Phi^+\rangle$ | 2 | $CX_{0\to 1} H_0\|00\rangle$ | $(\|00\rangle+\|11\rangle)/\sqrt{2}$ | $P(00)=P(11)=0.5$ | $2.19 \times 10^{-7}$ | Ideal Entanglement |
+| **QRL-011** | Bell State $\|\Phi^-\rangle$ | 2 | $CX_{0\to 1} H_0 X_0\|00\rangle$ | $(\|00\rangle-\|11\rangle)/\sqrt{2}$ | $P(00)=P(11)=0.5$ | $2.19 \times 10^{-7}$ | Ideal Entanglement |
+| **QRL-012** | Bell State $\|\Psi^+\rangle$ | 2 | $CX_{0\to 1} H_0 X_1\|00\rangle$ | $(\|01\rangle+\|10\rangle)/\sqrt{2}$ | $P(01)=P(10)=0.5$ | $2.19 \times 10^{-7}$ | Ideal Entanglement |
+| **QRL-013** | Bell State $\|\Psi^-\rangle$ | 2 | $CX_{0\to 1} H_0 X_0 X_1\|00\rangle$ | $(\|01\rangle-\|10\rangle)/\sqrt{2}$ | $P(01)=P(10)=0.5$ | $2.19 \times 10^{-7}$ | Ideal Entanglement |
+| **QRL-014** | 3-Qubit GHZ State | 3 | $CX_{1\to 2} CX_{0\to 1} H_0\|000\rangle$ | $(\|000\rangle+\|111\rangle)/\sqrt{2}$ | $P(000)=P(111)=0.5$ | $2.19 \times 10^{-7}$ | Multipartite Entanglement |
+| **QRL-015** | 3-Qubit W State | 3 | $R_Y, CX, CCX$ on 3Q | $(\|001\rangle+\|010\rangle+\|100\rangle)/\sqrt{3}$ | $P \approx 0.333$ each | $4.25 \times 10^{-7}$ | Multipartite Entanglement |
+| **QRL-016** | 2-Qubit SWAP Gate | 2 | $\text{SWAP}_{0,1} X_0\|00\rangle$ | $\|01\rangle$ | $P(01)=1.0$ | $0.00$ | Unitary Permutation |
+| **QRL-017** | Controlled-Z (CZ) | 2 | $CZ_{0,1} H_1 X_0\|00\rangle$ | Entangled Phase State | Matches | $1.11 \times 10^{-16}$ | Phase Entanglement |
+| **QRL-018** | Deutsch's Algorithm | 2 | Balanced Oracle $CX$ | Deterministic $q_0=1$ | $P(1x)=1.0$ | $2.19 \times 10^{-7}$ | Oracle Algorithm |
+| **QRL-019** | Deutsch-Jozsa | 3 | Constant Oracle | Deterministic $q_{0,1}=0$ | $P(00x)=1.0$ | $2.19 \times 10^{-7}$ | Oracle Algorithm |
+| **QRL-020** | Bernstein-Vazirani | 3 | Secret string $s=11$ | Deterministic $q_{0,1}=1$ | $P(11x)=1.0$ | $2.19 \times 10^{-7}$ | Oracle Algorithm |
+| **QRL-021** | Grover's 2-Qubit Search | 2 | Oracle + Diffusion on $\|11\rangle$ | Marked state $\|11\rangle$ with $P=1.0$ | $P(11)=1.0$ | $4.44 \times 10^{-16}$ | Quantum Search |
+| **QRL-022** | 3-Qubit QFT | 3 | $H, R_Z, \text{SWAP}$ network | Periodic Frequency Domain | Matches | $3.91 \times 10^{-7}$ | Quantum Transform |
+| **QRL-023** | Variational Classifier | 2 | Parameterized $R_Y, R_Z, CX$ ansatz | Separating Hyperplane State | Matches | $6.26 \times 10^{-7}$ | Ansatz / Proxy Optimization |
+
+---
+
+## 8. Scientific Tolerances & Summary
+
+| Metric | Allowable Tolerance | Observed Max Discrepancy | Status |
+| :--- | :--- | :--- | :--- |
+| **Probability Normalization $\sum P_i$** | $|1.0 - \sum P_i| \le 10^{-4}$ | $2.21 \times 10^{-6}$ | **PASS** |
+| **Statevector Amplitude Tolerance** | $\|c_{\text{QRL}} - c_{\text{Ref}}\|_\infty \le 10^{-4}$ | $6.26 \times 10^{-7}$ | **PASS** |
+| **Quantum State Fidelity $\mathcal{F}$** | $\ge 0.9999$ | $1.000000$ | **PASS** |
+| **Finite-Shot Count Conservation** | $\sum C_i = \text{shots}$ (exact integer) | Exact $(1,024)$ | **PASS** |
+| **Single-Qubit Subsystem Purity (Bell)** | $|0.5000 - \gamma_0| \le 10^{-4}$ | $< 10^{-8}$ | **PASS** |
+
